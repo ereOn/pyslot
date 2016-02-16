@@ -1,7 +1,7 @@
 .. _index:
 
 PySlot - Documentation
-=====================
+======================
 
 `PySlot` a dead-simple signal/slot library for Python.
 
