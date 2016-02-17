@@ -23,19 +23,24 @@ class Signal(object):
     def __init__(self):
         self._callbacks = []
 
-    def connect(self, callback):
+    def connect(self, callback, weak=False):
         """
         Connects a new callback to this signal.
 
         :param callback: The callback to connect.
+        :param weak: If `True`, only holds a weak reference to the specified
+            callback.
 
         `callback` will be called whenever `emit` gets called on the `Signal`
         instance.
 
-        A weak reference is kept, meaning that if the callback gets destroyed,
-        it is unregistered from the signal automatically.
+        If a weak reference is kept, when the callback gets destroyed, it will
+        be unregistered from the signal automatically. This can help avoiding
+        circular references in user-code.
 
-        This design choice helps avoiding circular references in user-code.
+        .. warning::
+            Beware of bound methods ! Those are generally short-lived and don't
+            play nicely with weak reference.
 
         .. note::
             Connecting the same callback twice or more will cause the callback
@@ -44,13 +49,18 @@ class Signal(object):
             You will have to call `disconnect` as many times as the `connect`
             call was called to unregister a callback completely.
         """
-        self._callbacks.append(ref(callback, self._callbacks.remove))
+        if weak:
+            callback = ref(callback, self._callbacks.remove)
+
+        self._callbacks.append(callback)
 
     def disconnect(self, callback):
         """
         Disconnects a callback from this signal.
 
         :param callback: The callback to disconnect.
+        :param weak: A flag that must have the same value than the one
+            specified during the call to `connect`.
 
         .. warning::
             If the callback is not connected at the time of call, a
@@ -59,11 +69,17 @@ class Signal(object):
         .. note::
             You may call `disconnect` from a connected callback.
         """
-        self._callbacks.remove(ref(callback))
+        try:
+            self._callbacks.remove(callback)
+        except ValueError:
+            self._callbacks.remove(ref(callback))
 
     @property
     def callbacks(self):
-        return [callback_ref() for callback_ref in self._callbacks]
+        return [
+            cb() if isinstance(cb, ref) else cb
+            for cb in self._callbacks
+        ]
 
     def emit(self, *args, **kwargs):
         """

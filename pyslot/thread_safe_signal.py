@@ -19,19 +19,24 @@ class ThreadSafeSignal(object):
         self._read_lock = RLock()
         self._write_lock = RLock()
 
-    def connect(self, callback):
+    def connect(self, callback, weak=False):
         """
         Connects a new callback to this signal.
 
         :param callback: The callback to connect.
+        :param weak: If `True`, only holds a weak reference to the specified
+            callback.
 
         `callback` will be called whenever `emit` gets called on the `Signal`
         instance.
 
-        A weak reference is kept, meaning that if the callback gets destroyed,
-        it is unregistered from the signal automatically.
+        If a weak reference is kept, when the callback gets destroyed, it will
+        be unregistered from the signal automatically. This can help avoiding
+        circular references in user-code.
 
-        This design choice helps avoiding circular references in user-code.
+        .. warning::
+            Beware of bound methods ! Those are generally short-lived and don't
+            play nicely with weak reference.
 
         .. note::
             Connecting the same callback twice or more will cause the callback
@@ -40,14 +45,20 @@ class ThreadSafeSignal(object):
             You will have to call `disconnect` as many times as the `connect`
             call was called to unregister a callback completely.
         """
-        with self._write_lock:
-            with self._read_lock:
-                self._callbacks.append(ref(callback, self._disconnect))
+        if weak:
+            callback = ref(callback, self._disconnect)
 
-    def _disconnect(self, callback_ref):
         with self._write_lock:
             with self._read_lock:
-                self._callbacks.remove(callback_ref)
+                self._callbacks.append(callback)
+
+    def _disconnect(self, callback):
+        with self._write_lock:
+            with self._read_lock:
+                try:
+                    self._callbacks.remove(callback)
+                except ValueError:
+                    self._callbacks.remove(ref(callback))
 
     def disconnect(self, callback):
         """
@@ -62,12 +73,15 @@ class ThreadSafeSignal(object):
         .. note::
             You may call `disconnect` from a connected callback.
         """
-        self._disconnect(ref(callback))
+        self._disconnect(callback)
 
     @property
     def callbacks(self):
         with self._read_lock:
-            return [callback_ref() for callback_ref in self._callbacks]
+            return [
+                cb() if isinstance(cb, ref) else cb
+                for cb in self._callbacks
+            ]
 
     def emit(self, *args, **kwargs):
         """

@@ -75,6 +75,26 @@ def test_signal_emit_after_disconnect(args, kwargs):
     signal.connect(callback)
     signal.disconnect(callback)
 
+    assert not signal.callbacks
+
+    signal.emit(*args, **kwargs)
+
+    assert cb.mock_calls == []
+
+
+@with_emit_arguments
+def test_signal_emit_after_disconnect_weak(args, kwargs):
+    cb = MagicMock()
+
+    def callback(*args, **kwargs):
+        cb(*args, **kwargs)
+
+    signal = Signal()
+    signal.connect(callback, weak=True)
+    signal.disconnect(callback)
+
+    assert not signal.callbacks
+
     signal.emit(*args, **kwargs)
 
     assert cb.mock_calls == []
@@ -84,7 +104,7 @@ def test_signal_emit_after_disconnect(args, kwargs):
 def test_signal_emit_after_implicit_disconnect(args, kwargs):
     def callback(): pass
     signal = Signal()
-    signal.connect(callback)
+    signal.connect(callback, weak=True)
     del callback
 
     assert not signal.callbacks
