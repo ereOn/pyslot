@@ -37,16 +37,16 @@ Both have the same interface and can be used like so:
    signal.emit("alice", msg="Hi Bob !")
    signal.emit("bob", msg="Hi Alice !")
 
-The :func:`connect <pyslot.Signal.connect>` function takes a weak-reference to
-any callable that will in turn be called whenever the :func:`emit
-<pyslot.Signal.emit>` method gets called.
+The :func:`connect <pyslot.Signal.connect>` function stores a reference (which
+can be strong or weak) to any callable that will in turn be called whenever the
+:func:`emit <pyslot.Signal.emit>` method gets called.
 
 A signal can be connected to several callables, which will all be called *in
 their registration order*.
 
 It is also possible to disconnect a callable from the signal by calling the
 :func:`disconnect <pyslot.Signal.disconnect>` method with that callable as the
-single argument. Since only a weak-reference to the callable is kept,
+single argument. If only a weak-reference to the callable is kept,
 destroying the callable will implicitely disconnect it from the signal as well.
 
 .. note::
