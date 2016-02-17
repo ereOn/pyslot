@@ -118,11 +118,11 @@ def test_simultaneous_emit(args, kwargs):
     signal = Signal()
     signal.connect(callback)
 
-    NUM_THREADS = 20
+    num_threads = 20
 
     threads = [
         Thread(target=signal.emit, args=args, kwargs=kwargs)
-        for _ in range(NUM_THREADS)
+        for _ in range(num_threads)
     ]
 
     for thread in threads:
@@ -133,5 +133,5 @@ def test_simultaneous_emit(args, kwargs):
 
     assert callback.mock_calls == [
         call(*args, **kwargs)
-        for _ in range(NUM_THREADS)
+        for _ in range(num_threads)
     ]
