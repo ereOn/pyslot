@@ -8,9 +8,10 @@ from threading import RLock
 
 class ThreadSafeSignal(object):
     """
-    A thread-safe signal implementation.
+    A thread-safe, synchronous, signal implementation.
 
-    ..note:: This class is thread-safe. You may connect, disconnect or emit the
+    .. note::
+        This class is thread-safe. You may connect, disconnect or emit the
         signal from different threads.
     """
     def __init__(self):
@@ -25,12 +26,19 @@ class ThreadSafeSignal(object):
         :param callback: The callback to connect.
 
         `callback` will be called whenever `emit` gets called on the `Signal`
-        instance. A weak reference is kept, meaning that if the callback gets
-        destroyed, it is unregistered from the signal automatically. This
-        design choice helps avoiding circular references in user-code.
+        instance.
 
-        ..note:: Connecting the same callback twice or more will cause the
-            callback to be called several times per `emit` call.
+        A weak reference is kept, meaning that if the callback gets destroyed,
+        it is unregistered from the signal automatically.
+
+        This design choice helps avoiding circular references in user-code.
+
+        .. note::
+            Connecting the same callback twice or more will cause the callback
+            to be called several times per `emit` call.
+
+            You will have to call `disconnect` as many times as the `connect`
+            call was called to unregister a callback completely.
         """
         with self._write_lock:
             with self._read_lock:
@@ -47,10 +55,12 @@ class ThreadSafeSignal(object):
 
         :param callback: The callback to disconnect.
 
-        ..warning:: If the callback is not connected at the time of call, an
-            `ValueError` exception is thrown.
+        .. warning::
+            If the callback is not connected at the time of call, a
+            :class:`ValueError` exception is thrown.
 
-        ..note:: You may call `disconnect` from a connected callback.
+        .. note::
+            You may call `disconnect` from a connected callback.
         """
         self._disconnect(ref(callback))
 
@@ -65,6 +75,9 @@ class ThreadSafeSignal(object):
 
         :param args: The arguments.
         :param kwargs: The keyword arguments.
+
+        All the connected callbacks will be called synchronously in order of
+        their registration.
         """
         for callback in self.callbacks:
             callback(*args, **kwargs)

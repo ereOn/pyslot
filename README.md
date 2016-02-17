@@ -10,6 +10,29 @@
 
 **PySlot** is a dead-simple signal/slot library for Python.
 
+## Usage
+
+An example is worth a thousand words:
+
+    from pyslot import Signal
+
+    signal = Signal()
+
+    def greet(name, msg):
+        print("{name} says: {msg}".format(name=name, msg=msg))
+
+    signal.connect(greet)
+
+    signal.emit("alice", "Hello Bob !")
+    signal.emit("bob", "Hello Alice !")
+
+The `Signal` class is simple, optimized and straightforward. It synchronously
+calls all the connected callbacks, in order, whenever its `emit` method get
+called.
+
+Learn more about it in the
+[documentation](https://readthedocs.org/projects/pyslot/badge/?version=latest).
+
 ## Installation
 
 You may install it by using `pip`:
