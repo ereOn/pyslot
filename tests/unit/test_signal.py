@@ -90,3 +90,22 @@ def test_signal_emit_after_implicit_disconnect(args, kwargs):
     assert not signal.callbacks
 
     signal.emit(*args, **kwargs)
+
+
+@with_emit_arguments
+def test_disconnect_during_emit(args, kwargs):
+    signal = Signal()
+
+    def remover(*args, **kwargs):
+        signal.disconnect(remover)
+
+    callbacks = [MagicMock(), remover, MagicMock(), MagicMock()]
+
+    for callback in callbacks:
+        signal.connect(callback)
+
+    signal.emit(*args, **kwargs)
+
+    for callback in callbacks:
+        if callback is not remover:
+            callback.assert_called_once_with(*args, **kwargs)

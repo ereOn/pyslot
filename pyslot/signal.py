@@ -10,7 +10,7 @@ class Signal(object):
     The base signal class.
     """
     def __init__(self):
-        self.callbacks = []
+        self._callbacks = []
 
     def connect(self, callback):
         """
@@ -26,7 +26,7 @@ class Signal(object):
         ..note:: Connecting the same callback twice or more will cause the
             callback to be called several times per `emit` call.
         """
-        self.callbacks.append(ref(callback, self.callbacks.remove))
+        self._callbacks.append(ref(callback, self._callbacks.remove))
 
     def disconnect(self, callback):
         """
@@ -37,7 +37,11 @@ class Signal(object):
         ..note:: If the callback is not connected at the time of call, an
             `ValueError` exception is thrown.
         """
-        self.callbacks.remove(ref(callback))
+        self._callbacks.remove(ref(callback))
+
+    @property
+    def callbacks(self):
+        return [callback_ref() for callback_ref in self._callbacks]
 
     def emit(self, *args, **kwargs):
         """
@@ -47,4 +51,4 @@ class Signal(object):
         :param kwargs: The keyword arguments.
         """
         for callback in self.callbacks:
-            callback()(*args, **kwargs)
+            callback(*args, **kwargs)
