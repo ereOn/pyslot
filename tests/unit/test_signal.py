@@ -78,3 +78,15 @@ def test_signal_emit_after_disconnect(args, kwargs):
     signal.emit(*args, **kwargs)
 
     assert cb.mock_calls == []
+
+
+@with_emit_arguments
+def test_signal_emit_after_implicit_disconnect(args, kwargs):
+    def callback(): pass
+    signal = Signal()
+    signal.connect(callback)
+    del callback
+
+    assert not signal.callbacks
+
+    signal.emit(*args, **kwargs)
