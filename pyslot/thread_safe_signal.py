@@ -3,19 +3,20 @@ The base signal classes.
 """
 
 from weakref import ref
+from threading import RLock
 
 
-class Signal(object):
+class ThreadSafeSignal(object):
     """
-    The base signal class.
+    A thread-safe signal implementation.
 
-    ..warning:: This class is *NOT* thread-safe. In particular, attempting to
-    connect, disconnect or emit the signal simultaneously from different
-    threads has unspecified behaviour. If you need that kind of thread-safety
-    and can pay the cost for it, look at `ThreadSafeSignal` instead.
+    ..note:: This class is thread-safe. You may connect, disconnect or emit the
+        signal from different threads.
     """
     def __init__(self):
         self._callbacks = []
+        self._read_lock = RLock()
+        self._write_lock = RLock()
 
     def connect(self, callback):
         """
@@ -31,7 +32,14 @@ class Signal(object):
         ..note:: Connecting the same callback twice or more will cause the
             callback to be called several times per `emit` call.
         """
-        self._callbacks.append(ref(callback, self._callbacks.remove))
+        with self._write_lock:
+            with self._read_lock:
+                self._callbacks.append(ref(callback, self._disconnect))
+
+    def _disconnect(self, callback_ref):
+        with self._write_lock:
+            with self._read_lock:
+                self._callbacks.remove(callback_ref)
 
     def disconnect(self, callback):
         """
@@ -44,11 +52,12 @@ class Signal(object):
 
         ..note:: You may call `disconnect` from a connected callback.
         """
-        self._callbacks.remove(ref(callback))
+        self._disconnect(ref(callback))
 
     @property
     def callbacks(self):
-        return [callback_ref() for callback_ref in self._callbacks]
+        with self._read_lock:
+            return [callback_ref() for callback_ref in self._callbacks]
 
     def emit(self, *args, **kwargs):
         """
