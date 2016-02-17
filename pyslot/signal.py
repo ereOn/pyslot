@@ -34,8 +34,10 @@ class Signal(object):
 
         :param callback: The callback to disconnect.
 
-        ..note:: If the callback is not connected at the time of call, an
+        ..warning:: If the callback is not connected at the time of call, an
             `ValueError` exception is thrown.
+
+        ..note:: You may call `disconnect` from a connected callback.
         """
         self._callbacks.remove(ref(callback))
 
