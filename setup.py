@@ -22,7 +22,7 @@ ease-of-use.
         'tests',
     ]),
     install_requires=[
-        'six==1.10.0',
+        'six>=1.10.0,<2.0.0',
     ],
     test_suite='tests',
     classifiers=[
