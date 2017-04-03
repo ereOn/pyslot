@@ -32,7 +32,7 @@ calls all the connected callbacks, in order, whenever its `emit` method get
 called.
 
 Learn more about it in the
-[documentation](https://readthedocs.org/projects/pyslot/badge/?version=latest).
+[documentation](http://pyslot.readthedocs.io/en/latest/?badge=latest).
 
 ## Installation
 
